@@ -18,10 +18,13 @@
           @change="onFileChange"
           placeholder=""
           drop-placeholder="Drop file here..."
+          v-model="inputFile"
           accept=".csv"
         ></b-form-file>
       </b-col>
-      <b-button class="input-button" v-on:click="save" variant="success">Save</b-button>
+      <b-button class="input-button" v-on:click="save" variant="success"
+        >Save</b-button
+      >
       <b-button class="input-button" v-on:click="reset">Reset</b-button>
     </b-row>
     <b-row>
@@ -128,6 +131,8 @@ export default {
         )
       );
 
+      console.log(grouped);
+
       // Calculate total cost of each category, grouped per month
       vue.totalCostsPerMonth = grouped.map((expenseArray) => {
         var item = {};
@@ -148,7 +153,7 @@ export default {
       });
 
       // Calculate average cost per month, grouped by category
-      vue.averageCostPerMonth = Array.from(vue.categories).map((category) => {
+      vue.averageCostsPerMonth = Array.from(vue.categories).map((category) => {
         var result = {};
         result.name = category;
         result.value =
@@ -162,7 +167,16 @@ export default {
           vue.totalCostsPerMonth.length;
         return result;
       });
-      vue.option2.series[0].data = Array.from(vue.averageCostPerMonth);
+      vue.option2.series[0].data = Array.from(vue.averageCostsPerMonth);
+      vue.averageCostPerMonth =
+        grouped
+          .map((monthItem) => {
+            return monthItem[1].reduce(
+              (acc, val) => acc + parseFloat(val.Cost), 0
+            );
+          })
+          .reduce((acc, val) => acc + val, 0) / grouped.length;
+      vue.option2.title.text = "Monthly\n" + parseInt(vue.averageCostPerMonth) +"$/month";
     },
     mapToCategories(item) {
       return item.Category;
@@ -181,13 +195,14 @@ export default {
       this.categories = [];
       this.items = [];
       this.fields = [];
-      this.option.series.forEach(item => {
-          item.data = [];
+      this.option.series.forEach((item) => {
+        item.data = [];
       });
-      this.option2.series.forEach(item => {
-          item.data = [];
+      this.option2.series.forEach((item) => {
+        item.data = [];
       });
-    }
+      this.inputFile = null;
+    },
   },
   data() {
     return {
@@ -198,7 +213,7 @@ export default {
         },
         tooltip: {
           trigger: "item",
-          formatter: "{a} <br/>{b} : {c} ({d}%)",
+          formatter: "{b} : {c} ({d}%)",
         },
         legend: {
           orient: "vertical",
@@ -209,8 +224,8 @@ export default {
           {
             name: "All Time",
             type: "pie",
-            radius: "55%",
-            center: ["50%", "60%"],
+            radius: "50%",
+            center: ["50%", "50%"],
             data: [],
             emphasis: {
               itemStyle: {
@@ -229,14 +244,14 @@ export default {
         },
         tooltip: {
           trigger: "item",
-          formatter: "{a} <br/>{b} : {c} ({d}%)",
+          formatter: "{b} : {c} ({d}%)",
         },
         series: [
           {
             name: "Monthly",
             type: "pie",
-            radius: "55%",
-            center: ["50%", "60%"],
+            radius: "50%",
+            center: ["50%", "50%"],
             data: [],
             emphasis: {
               itemStyle: {
@@ -253,10 +268,13 @@ export default {
       items: [],
       fields: [],
       totalCostsPerMonth: [],
+      averageCostsPerMonth: [],
+      averageCostPerMonth: 0.0,
       showError: false,
       showSuccess: false,
       successAlertMessage: "",
       errorAlertMessage: "",
+      inputFile: null
     };
   },
 };
