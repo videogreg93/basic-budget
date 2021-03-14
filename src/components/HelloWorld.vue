@@ -9,13 +9,21 @@
       fade
       >{{ successAlertMessage }}</b-alert
     >
-    <b-form-file
-      :state="Boolean(file1)"
-      @change="onFileChange"
-      placeholder="Choose a file or drop it here..."
-      drop-placeholder="Drop file here..."
-      accept=".csv"
-    ></b-form-file>
+    <b-alert id="alert" variant="danger" :show="showError" dismissible fade>{{
+      errorAlertMessage
+    }}</b-alert>
+    <b-row class="fileRow">
+      <b-col cols="4">
+        <b-form-file
+          @change="onFileChange"
+          placeholder=""
+          drop-placeholder="Drop file here..."
+          accept=".csv"
+        ></b-form-file>
+      </b-col>
+      <b-button class="input-button" v-on:click="save" variant="success">Save</b-button>
+      <b-button class="input-button" v-on:click="reset">Reset</b-button>
+    </b-row>
     <b-row>
       <v-chart class="chart" id="chart1" :option="option" />
       <v-chart class="chart" id="chart2" :option="option2" />
@@ -59,36 +67,44 @@ export default {
   },
   methods: {
     onFileChange(e) {
+      console.log(e);
       var vue = this;
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
-        // We're filtering for only 2021 because of bad data before
-        var objects = csv
-          .toObjects(e.target.result)
-          .filter((element) => element.Date.split("-")[0] == 2021);
-        vue.expenses = objects;
-        vue.fields = csv.toArrays(e.target.result)[0].map(vue.toField);
-        vue.categories = new Set(objects.map(vue.mapToCategories));
-        vue.option.legend.data = Array.from(vue.categories);
-        // For each category, count up the costs
-        var costs = [];
-        this.categories.forEach((category) => {
-          var cost = objects
-            .filter((element) => element.Category == category)
-            .reduce((acc, val) => acc + parseFloat(val.Cost), 0);
-          var item = {};
-          item.value = cost;
-          item.name = category;
-          costs.push(item);
-        });
-        vue.option.series[0].data = costs;
-        vue.getMonthlyCosts();
-        vue.showSuccess = 3;
-        vue.successAlertMessage = "File imported!";
+        try {
+          // We're filtering for only 2021 because of bad data before
+          var objects = csv
+            .toObjects(e.target.result)
+            .filter((element) => element.Date.split("-")[0] == 2021);
+          vue.expenses = objects;
+          vue.fields = csv.toArrays(e.target.result)[0].map(vue.toField);
+          vue.categories = new Set(objects.map(vue.mapToCategories));
+          vue.option.legend.data = Array.from(vue.categories);
+          // For each category, count up the costs
+          var costs = [];
+          this.categories.forEach((category) => {
+            var cost = objects
+              .filter((element) => element.Category == category)
+              .reduce((acc, val) => acc + parseFloat(val.Cost), 0);
+            var item = {};
+            item.value = cost;
+            item.name = category;
+            costs.push(item);
+          });
+          vue.option.series[0].data = costs;
+          vue.getMonthlyCosts();
+          vue.showSuccess = 3;
+          vue.successAlertMessage = "File imported!";
+        } catch (error) {
+          vue.showError = true;
+          vue.errorAlertMessage = "File could not be imported.";
+          console.log(error);
+        }
       };
       reader.readAsText(file);
     },
+    // Generic function to group objects of an array via the keygetter
     groupBy(list, keyGetter) {
       const map = new Map();
       list.forEach((item) => {
@@ -157,6 +173,21 @@ export default {
       field.sortable = true;
       return field;
     },
+    save() {
+      console.log("save");
+    },
+    reset() {
+      this.expenses = [];
+      this.categories = [];
+      this.items = [];
+      this.fields = [];
+      this.option.series.forEach(item => {
+          item.data = [];
+      });
+      this.option2.series.forEach(item => {
+          item.data = [];
+      });
+    }
   },
   data() {
     return {
@@ -172,13 +203,7 @@ export default {
         legend: {
           orient: "vertical",
           left: "left",
-          data: [
-            "Direct",
-            "Email",
-            "Ad Networks",
-            "Video Ads",
-            "Search Engines",
-          ],
+          data: [],
         },
         series: [
           {
@@ -228,8 +253,10 @@ export default {
       items: [],
       fields: [],
       totalCostsPerMonth: [],
+      showError: false,
       showSuccess: false,
       successAlertMessage: "",
+      errorAlertMessage: "",
     };
   },
 };
@@ -243,5 +270,12 @@ export default {
 .chart {
   min-height: 400px;
   width: 50%;
+}
+.fileRow {
+  margin-bottom: 2%;
+}
+.input-button {
+  margin-left: 0.5%;
+  margin-right: 0.5%;
 }
 </style>
