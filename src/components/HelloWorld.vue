@@ -28,14 +28,28 @@
       <b-button class="input-button" v-on:click="reset">Reset</b-button>
     </b-row>
     <b-row>
-      <v-chart class="chart" id="chart1" :option="option" />
-      <v-chart class="chart" id="chart2" :option="option2" />
+      <v-chart
+        class="chart"
+        group="1"
+        :option="option"
+        autoresize
+        @legendselectchanged="legendSelected"
+      />
+      <v-chart
+        class="chart"
+        ref="chart"
+        group="1"
+        id="chart2"
+        :option="option2"
+        autoresize
+      />
     </b-row>
     <b-table striped hover :items="expenses" :fields="fields"></b-table>
   </b-container>
 </template>
 
 <script>
+import * as echarts from "echarts/core";
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { PieChart } from "echarts/charts";
@@ -55,11 +69,6 @@ use([
   LegendComponent,
 ]);
 
-window.onresize = function () {
-  use.init(document.getElementById("chart1")).resize();
-  use.init(document.getElementById("chart2")).resize();
-};
-
 export default {
   name: "HelloWorld",
   components: {
@@ -69,19 +78,32 @@ export default {
     [THEME_KEY]: "light",
   },
   methods: {
+    legendSelected(params) {
+      console.log("legend Selected");
+      console.log(params);
+      console.log(this.option2);
+    },
+    cleanupFile(e) {
+      // Cleans Splitwise files to remove unused lines
+      var result = e.substring(e.indexOf("\n") + 2);
+      result = result
+        .substring(1, result.length - 2)
+        .replace(/^\s*[\r\n]/gm, "\n");
+      return result;
+    },
     onFileChange(e) {
-      console.log(e);
       var vue = this;
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           // We're filtering for only 2021 because of bad data before
+          var fileResult = vue.cleanupFile(e.target.result);
           var objects = csv
-            .toObjects(e.target.result)
+            .toObjects(fileResult)
             .filter((element) => element.Date.split("-")[0] == 2021);
-          vue.expenses = objects;
-          vue.fields = csv.toArrays(e.target.result)[0].map(vue.toField);
+          vue.expenses = objects.slice(0, -1);
+          vue.fields = csv.toArrays(fileResult)[0].map(vue.toField);
           vue.categories = new Set(objects.map(vue.mapToCategories));
           vue.option.legend.data = Array.from(vue.categories);
           // For each category, count up the costs
@@ -131,8 +153,6 @@ export default {
         )
       );
 
-      console.log(grouped);
-
       // Calculate total cost of each category, grouped per month
       vue.totalCostsPerMonth = grouped.map((expenseArray) => {
         var item = {};
@@ -168,15 +188,18 @@ export default {
         return result;
       });
       vue.option2.series[0].data = Array.from(vue.averageCostsPerMonth);
+      console.log(grouped[2][1]);
       vue.averageCostPerMonth =
         grouped
           .map((monthItem) => {
             return monthItem[1].reduce(
-              (acc, val) => acc + parseFloat(val.Cost), 0
+              (acc, val) => acc + parseFloat(val.Cost),
+              0
             );
           })
           .reduce((acc, val) => acc + val, 0) / grouped.length;
-      vue.option2.title.text = "Monthly\n" + parseInt(vue.averageCostPerMonth) +"$/month";
+      vue.option2.title.text =
+        "Monthly\n" + parseInt(vue.averageCostPerMonth) + "$/month";
     },
     mapToCategories(item) {
       return item.Category;
@@ -206,6 +229,7 @@ export default {
   },
   data() {
     return {
+      resize: true,
       option: {
         title: {
           text: "Total Costs",
@@ -274,8 +298,12 @@ export default {
       showSuccess: false,
       successAlertMessage: "",
       errorAlertMessage: "",
-      inputFile: null
+      inputFile: null,
     };
+  },
+  mounted: function () {
+    console.log("Mounted");
+    echarts["connect"]("1");
   },
 };
 </script>
