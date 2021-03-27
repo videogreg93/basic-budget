@@ -27,7 +27,12 @@
       >
       <b-button class="input-button" v-on:click="reset">Reset</b-button>
     </b-row>
-      <date-filter-input v-model="dateRange" @dateChange="onDateChange" :fromProp="dateRange.from" :untilProp="dateRange.until" />
+    <date-filter-input
+      v-model="dateRange"
+      @dateChange="onDateChange"
+      :fromProp="dateRange.from"
+      :untilProp="dateRange.until"
+    />
     <b-row>
       <v-chart
         class="chart"
@@ -63,7 +68,12 @@
       id="grouped-expenses-table-container"
       accordion="expense-accordion"
     >
-      <b-table striped hover :items="expenses" :fields="fields"></b-table>
+      <b-table
+        striped
+        hover
+        :items="costsByCategory"
+        :fields="categoryFields"
+      ></b-table>
     </b-collapse>
   </b-container>
 </template>
@@ -104,8 +114,9 @@ export default {
       var vue = this;
       var from = this.dateRange.from;
       var until = this.dateRange.until;
-      var objects = vue.unfilteredObjects
-      .filter((element) => element.Date >= from && element.Date <= until);
+      var objects = vue.unfilteredObjects.filter(
+        (element) => element.Date >= from && element.Date <= until
+      );
       this.updateValues(objects);
     },
     legendSelected(params) {
@@ -138,6 +149,7 @@ export default {
         costs.push(item);
       });
       vue.option.series[0].data = costs;
+      vue.costsByCategory = costs;
       vue.getMonthlyCosts();
       vue.showSuccess = 3;
     },
@@ -148,8 +160,7 @@ export default {
       reader.onload = (e) => {
         try {
           var fileResult = vue.cleanupFile(e.target.result);
-          vue.unfilteredObjects = csv
-            .toObjects(fileResult)
+          vue.unfilteredObjects = csv.toObjects(fileResult);
           var objects = vue.unfilteredObjects;
           vue.fields = csv.toArrays(fileResult)[0].map(vue.toField);
           this.updateValues(objects);
@@ -264,7 +275,7 @@ export default {
     return {
       dateRange: {
         from: "0000-01-01",
-        until: "3000-01-01"
+        until: "3000-01-01",
       },
       resize: true,
       option: {
@@ -329,6 +340,17 @@ export default {
       unfilteredObjects: [],
       items: [],
       fields: [],
+      categoryFields: [
+        {
+          key: "name",
+          label: "Category",
+        },
+        {
+          key: "value",
+          label: "Cost",
+        },
+      ],
+      costsByCategory: [],
       totalCostsPerMonth: [],
       averageCostsPerMonth: [],
       averageCostPerMonth: 0.0,
