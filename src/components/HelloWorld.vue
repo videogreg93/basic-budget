@@ -44,7 +44,28 @@
         autoresize
       />
     </b-row>
-    <b-table striped hover :items="expenses" :fields="fields"></b-table>
+    <!-- Table Containers -->
+    <b-row class="accordian-row">
+      <b-button v-b-toggle.all-expenses-table-container variant="primary">
+        See All Expenses
+      </b-button>
+    </b-row>
+    <b-collapse id="all-expenses-table-container" accordion="expense-accordion">
+      <b-table striped hover :items="expenses" :fields="fields"></b-table>
+    </b-collapse>
+    <b-row class="accordian-row">
+      <b-button v-b-toggle.grouped-expenses-table-container variant="primary">
+        Expenses grouped by type
+      </b-button>
+    </b-row>
+    <b-collapse
+      id="grouped-expenses-table-container"
+      accordion="expense-accordion"
+    >
+      <date-filter-input v-model="dateRange" @dateChange="onDateChange" />
+      <p>Value: '{{ dateRange.until }}'</p>
+      <b-table striped hover :items="expenses" :fields="fields"></b-table>
+    </b-collapse>
   </b-container>
 </template>
 
@@ -60,6 +81,7 @@ import {
 } from "echarts/components";
 import VChart, { THEME_KEY } from "vue-echarts";
 import csv from "jquery-csv";
+import DateFilterInput from "./DateFilterInput.vue";
 
 use([
   CanvasRenderer,
@@ -73,11 +95,15 @@ export default {
   name: "HelloWorld",
   components: {
     VChart,
+    DateFilterInput,
   },
   provide: {
     [THEME_KEY]: "light",
   },
   methods: {
+    onDateChange() {
+      console.log(this.dateRange.from);
+    },
     legendSelected(params) {
       console.log("legend Selected");
       console.log(params);
@@ -91,35 +117,40 @@ export default {
         .replace(/^\s*[\r\n]/gm, "\n");
       return result;
     },
+    updateValues(objects) {
+      var vue = this;
+      vue.expenses = objects.slice(0, -1);
+      vue.categories = new Set(objects.map(vue.mapToCategories));
+      vue.option.legend.data = Array.from(vue.categories);
+      // For each category, count up the costs
+      var costs = [];
+      this.categories.forEach((category) => {
+        var cost = objects
+          .filter((element) => element.Category == category)
+          .reduce((acc, val) => acc + parseFloat(val.Cost), 0);
+        var item = {};
+        item.value = cost;
+        item.name = category;
+        costs.push(item);
+      });
+      vue.option.series[0].data = costs;
+      vue.getMonthlyCosts();
+      vue.showSuccess = 3;
+    },
     onFileChange(e) {
       var vue = this;
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          // We're filtering for only 2021 because of bad data before
           var fileResult = vue.cleanupFile(e.target.result);
-          var objects = csv
+          // We're filtering for only 2021 because of bad data before
+          vue.unfilteredObjects = csv
             .toObjects(fileResult)
             .filter((element) => element.Date.split("-")[0] == 2021);
-          vue.expenses = objects.slice(0, -1);
+          var objects = vue.unfilteredObjects;
           vue.fields = csv.toArrays(fileResult)[0].map(vue.toField);
-          vue.categories = new Set(objects.map(vue.mapToCategories));
-          vue.option.legend.data = Array.from(vue.categories);
-          // For each category, count up the costs
-          var costs = [];
-          this.categories.forEach((category) => {
-            var cost = objects
-              .filter((element) => element.Category == category)
-              .reduce((acc, val) => acc + parseFloat(val.Cost), 0);
-            var item = {};
-            item.value = cost;
-            item.name = category;
-            costs.push(item);
-          });
-          vue.option.series[0].data = costs;
-          vue.getMonthlyCosts();
-          vue.showSuccess = 3;
+          this.updateValues(objects);
           vue.successAlertMessage = "File imported!";
         } catch (error) {
           vue.showError = true;
@@ -229,6 +260,7 @@ export default {
   },
   data() {
     return {
+      dateRange: {},
       resize: true,
       option: {
         title: {
@@ -289,6 +321,7 @@ export default {
       },
       categories: [],
       expenses: [],
+      unfilteredObjects: [],
       items: [],
       fields: [],
       totalCostsPerMonth: [],
@@ -309,6 +342,10 @@ export default {
 </script>
 
 <style>
+.accordian-row {
+  margin-top: 1%;
+  margin-bottom: 1%;
+}
 .container {
   display: flex;
   flex-flow: column wrap;
