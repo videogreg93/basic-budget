@@ -27,6 +27,7 @@
       >
       <b-button class="input-button" v-on:click="reset">Reset</b-button>
     </b-row>
+      <date-filter-input v-model="dateRange" @dateChange="onDateChange" :fromProp="dateRange.from" :untilProp="dateRange.until" />
     <b-row>
       <v-chart
         class="chart"
@@ -62,8 +63,6 @@
       id="grouped-expenses-table-container"
       accordion="expense-accordion"
     >
-      <date-filter-input v-model="dateRange" @dateChange="onDateChange" />
-      <p>Value: '{{ dateRange.until }}'</p>
       <b-table striped hover :items="expenses" :fields="fields"></b-table>
     </b-collapse>
   </b-container>
@@ -102,7 +101,12 @@ export default {
   },
   methods: {
     onDateChange() {
-      console.log(this.dateRange.from);
+      var vue = this;
+      var from = this.dateRange.from;
+      var until = this.dateRange.until;
+      var objects = vue.unfilteredObjects
+      .filter((element) => element.Date >= from && element.Date <= until);
+      this.updateValues(objects);
     },
     legendSelected(params) {
       console.log("legend Selected");
@@ -144,10 +148,8 @@ export default {
       reader.onload = (e) => {
         try {
           var fileResult = vue.cleanupFile(e.target.result);
-          // We're filtering for only 2021 because of bad data before
           vue.unfilteredObjects = csv
             .toObjects(fileResult)
-            .filter((element) => element.Date.split("-")[0] == 2021);
           var objects = vue.unfilteredObjects;
           vue.fields = csv.toArrays(fileResult)[0].map(vue.toField);
           this.updateValues(objects);
@@ -260,7 +262,10 @@ export default {
   },
   data() {
     return {
-      dateRange: {},
+      dateRange: {
+        from: "0000-01-01",
+        until: "3000-01-01"
+      },
       resize: true,
       option: {
         title: {
