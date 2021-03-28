@@ -33,7 +33,7 @@
       :fromProp="dateRange.from"
       :untilProp="dateRange.until"
     />
-    <b-row>
+    <b-row v-if="expensesExist()">
       <v-chart
         class="chart"
         group="1"
@@ -51,7 +51,7 @@
       />
     </b-row>
     <!-- Table Containers -->
-    <b-row class="accordian-row">
+    <b-row class="accordian-row" v-if="expensesExist()">
       <b-button v-b-toggle.all-expenses-table-container variant="primary">
         See All Expenses
       </b-button>
@@ -59,7 +59,7 @@
     <b-collapse id="all-expenses-table-container" accordion="expense-accordion">
       <b-table striped hover :items="expenses" :fields="fields"></b-table>
     </b-collapse>
-    <b-row class="accordian-row">
+    <b-row class="accordian-row" v-if="expensesExist()">
       <b-button v-b-toggle.grouped-expenses-table-container variant="primary">
         Expenses grouped by type
       </b-button>
@@ -110,6 +110,9 @@ export default {
     [THEME_KEY]: "light",
   },
   methods: {
+    expensesExist() {
+      return this.expenses.length != 0;
+    },
     onDateChange() {
       var vue = this;
       var from = this.dateRange.from;

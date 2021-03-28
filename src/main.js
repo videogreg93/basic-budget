@@ -1,7 +1,8 @@
 import App from './App.vue'
 import Vue from 'vue'
-import VueRouter from 'vue-router'
+import router from './router'
 import ECharts from 'vue-echarts'
+import HelloComponent from './components/HelloWorld'
 import { use } from 'echarts/core'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
@@ -23,14 +24,6 @@ import {
 
 Vue.config.productionTip = false
 
-const routes = [
-  { path: '/foo', component: App }
-];
-
-const router = new VueRouter({
-  routes // short for `routes: routes`
-});
-
 use([
   CanvasRenderer,
   BarChart,
@@ -40,12 +33,12 @@ use([
 
 Vue.use(BootstrapVue);
 Vue.use(IconsPlugin);
-Vue.use(VueRouter);
 
 // register globally (or you can do it locally)
 Vue.component('chart', ECharts)
+Vue.component('HelloWorld', HelloComponent)
 
 new Vue({
+  router,
   render: h => h(App),
-  routes: router
 }).$mount('#app')
