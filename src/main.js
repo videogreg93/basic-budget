@@ -6,6 +6,7 @@ import HelloComponent from './components/HelloWorld'
 import { use } from 'echarts/core'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import firebase from 'firebase/app'
+import store from "./store";
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'bootstrap';
@@ -51,7 +52,14 @@ var firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
+
+firebase.auth().onAuthStateChanged(user => {
+  console.log(user);
+  store.dispatch("fetchUser", user);
+});
+
 new Vue({
   router,
+  store,
   render: h => h(App),
 }).$mount('#app')

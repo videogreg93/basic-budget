@@ -48,6 +48,7 @@
 
 <script>
 import firebase from "firebase";
+import store from "../store";
 
 export default {
   name: "LoginView",
@@ -68,8 +69,8 @@ export default {
       firebase
         .auth()
         .signInWithEmailAndPassword(this.email, this.password)
-        .then(data => {
-          console.log(data);
+        .then((user) => {
+          store.dispatch("fetchUser", user);
           vue.$router.replace({ name: "Dashboard" });
         })
         .catch(err => {
