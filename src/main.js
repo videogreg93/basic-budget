@@ -5,6 +5,7 @@ import ECharts from 'vue-echarts'
 import HelloComponent from './components/HelloWorld'
 import { use } from 'echarts/core'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import firebase from 'firebase/app'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'bootstrap';
@@ -38,6 +39,18 @@ Vue.use(IconsPlugin);
 Vue.component('chart', ECharts)
 Vue.component('HelloWorld', HelloComponent)
 
+// Firebase configuration
+var firebaseConfig = {
+  apiKey: "AIzaSyCkS_VQHe1wICtDNzLrBefTHFv7JxBWRv0",
+  authDomain: "basic-budget-1085b.firebaseapp.com",
+  projectId: "basic-budget-1085b",
+  storageBucket: "basic-budget-1085b.appspot.com",
+  messagingSenderId: "329374989844",
+  appId: "1:329374989844:web:2c034a74fa8adb319cb101",
+  measurementId: "G-HXMHB8ZK53"
+};
+firebase.initializeApp(firebaseConfig);
+firebase.analytics();
 new Vue({
   router,
   render: h => h(App),

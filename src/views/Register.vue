@@ -1,10 +1,10 @@
 <template>
   <b-container>
-    <h1 class="login-title">Login</h1>
+    <h1 class="login-title">Sign Up</h1>
     <b-alert id="alert" variant="danger" :show="showError()" dismissible fade>{{
       error
     }}</b-alert>
-    <b-link class="register-link" to="/register/">Register</b-link>
+    <b-link class="register-link" to="/login/">Log in</b-link>
     <b-row class="form-container">
       <b-form class="login-form">
         <b-form-group
@@ -38,8 +38,8 @@
           type="submit"
           block
           variant="primary"
-          v-on:click="attemptLogin"
-          >Submit</b-button
+          v-on:click="attemptRegister"
+          >Sign Up</b-button
         >
       </b-form>
     </b-row>
@@ -50,29 +50,28 @@
 import firebase from "firebase";
 
 export default {
-  name: "LoginView",
+  name: "RegisterView",
   data() {
     return {
       email: "",
       password: "",
-      error: ""
+      error: "",
     };
   },
   methods: {
     showError() {
       return this.error != "";
     },
-    attemptLogin(event) {
+    attemptRegister(event) {
       event.preventDefault();
-      var vue = this;
       firebase
         .auth()
-        .signInWithEmailAndPassword(this.email, this.password)
-        .then(data => {
+        .createUserWithEmailAndPassword(this.email, this.password)
+        .then((data) => {
           console.log(data);
-          vue.$router.replace({ name: "Dashboard" });
         })
-        .catch(err => {
+        .catch((err) => {
+          console.log(err);
           this.error = err.message;
         });
     },
