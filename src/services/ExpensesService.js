@@ -24,13 +24,15 @@ const ExpensesService = (function () {
         return expensesDB.get().then((querySnapshot) => {
             var data = [];
             querySnapshot.forEach((doc) => {
-                data.push(doc.data());
+                var item = doc.data();
+                item.id = doc.id;
+                data.push(item);
             });
             return data;
         });
     }
     function _addExpenses(expenses) {
-        expenses.forEach((item) => {
+        return expenses.forEach((item) => {
             expensesDB
                 .add(item)
                 .catch((error) => {
@@ -45,13 +47,22 @@ const ExpensesService = (function () {
                 console.error("Error writing document: ", error);
             });
     }
+    function _deleteExpense(expense) {
+        return expensesDB
+            .doc(expense.id)
+            .delete()
+            .catch((error) => {
+                console.error("Error writing document: ", error);
+            });
+    }
     return {
         init: _init,
         onLogin: _onLogin,
         getService: _getService,
         getExpenses: _getExpenses,
         addExpenses: _addExpenses,
-        addExpense: _addExpense
+        addExpense: _addExpense,
+        deleteExpense: _deleteExpense
     }
 })();
 

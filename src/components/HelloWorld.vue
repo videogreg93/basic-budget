@@ -88,7 +88,16 @@
           <b-button variant="success" v-on:click="addNewExpense">Add</b-button>
         </b-form>
       </b-collapse>
-      <b-table striped hover :items="expenses" :fields="fields"></b-table>
+      <b-table striped hover :items="expenses" :fields="fields">
+        <template #cell(actions)="data">
+          <b-icon
+            icon="trash"
+            class="rounded bg-danger p-1 trash-icon"
+            variant="light"
+            v-on:click="deleteExpense(data.item)"
+          ></b-icon>
+        </template>
+      </b-table>
     </b-collapse>
     <b-row class="accordian-row" v-if="expensesExist()">
       <b-button v-b-toggle.grouped-expenses-table-container variant="primary">
@@ -143,6 +152,19 @@ export default {
     [THEME_KEY]: "light",
   },
   methods: {
+    deleteExpense(expense) {
+      console.log(expense);
+      var vue = this;
+      ExpensesService.getService()
+        .deleteExpense(expense)
+        .then(() => {
+          console.log("Expense deleted!");
+          vue.unfilteredObjects = vue.unfilteredObjects.filter((item) => {
+            return item.id != expense.id;
+          });
+          vue.onDateChange()
+        });
+    },
     addNewExpense(event) {
       var vue = this;
       event.preventDefault();
@@ -150,12 +172,12 @@ export default {
         .addExpense(this.addExpense)
         .then(() => {
           console.log("Document added!");
-          vue.unfilteredObjects.push(this.addExpense);
+          vue.unfilteredObjects.unshift(this.addExpense);
           vue.addExpense = {};
-          vue.updateValues(vue.unfilteredObjects);
+          vue.onDateChange();
         })
         .catch((err) => {
-            console.log(err);
+          console.log(err);
         });
     },
     expensesExist() {
@@ -388,7 +410,16 @@ export default {
       expenses: [],
       unfilteredObjects: [],
       items: [],
-      fields: ["Date", "Category", "Description", "Cost"],
+      fields: [
+        "Date",
+        "Category",
+        "Description",
+        "Cost",
+        {
+          key: "actions",
+          label: "",
+        },
+      ],
       categoryFields: [
         {
           key: "name",
@@ -457,6 +488,11 @@ body {
 }
 .add-expense-button {
   margin-bottom: 0.5%;
+}
+.trash-icon {
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
 }
 #add-expense-form {
   margin-bottom: 0.5%;
