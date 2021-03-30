@@ -41,6 +41,24 @@
           v-on:click="attemptLogin"
           >Submit</b-button
         >
+
+        <hr data-content="or" class="u-hr-text" />
+
+        <b-button
+          name="button"
+          type="button"
+          block
+          variant="primary"
+          data-label="Continue with Google"
+          v-on:click="loginWithGoogle"
+        >
+          <span class="google-image">
+            <img
+              src="https://ynab-evergreen-assets.youneedabudget.com/ynab-api-production/v1.61940/assets/google-logo-54e60c3db3a805b0cdd5ace5c871f691ebe85248f6685f663c0e007ace582b72.svg"
+              class="google-image"
+            /> </span
+          ><span class="brand-name">Continue with Google</span>
+        </b-button>
       </b-form>
     </b-row>
   </b-container>
@@ -56,12 +74,28 @@ export default {
     return {
       email: "",
       password: "",
-      error: ""
+      error: "",
     };
   },
   methods: {
     showError() {
       return this.error != "";
+    },
+    loginWithGoogle() {
+      var vue = this;
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase
+        .auth()
+        .signInWithPopup(provider)
+        .then((user) => {
+          console.log("login success")
+          store.dispatch("fetchUser", user);
+          console.log(firebase.auth().currentUser.uid);
+          vue.$router.replace({ name: "Dashboard" });
+        })
+        .catch((err) => {
+          this.error = err.message;
+        });
     },
     attemptLogin(event) {
       event.preventDefault();
@@ -74,7 +108,7 @@ export default {
           console.log(firebase.auth().currentUser.uid);
           vue.$router.replace({ name: "Dashboard" });
         })
-        .catch(err => {
+        .catch((err) => {
           this.error = err.message;
         });
     },
@@ -107,5 +141,11 @@ export default {
 
 .register-link {
   text-align: center;
+}
+
+.google-image {
+  width: 10%;
+  position: relative;
+  right: 4%;
 }
 </style>
