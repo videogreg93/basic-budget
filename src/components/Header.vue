@@ -2,7 +2,7 @@
   <b-row class="header">
     <h4 v-on:click="goHome()" class="home-button">Basic Budget</h4>
     <b-nav pills class="navigation">
-      <b-nav-item active>Active</b-nav-item>
+      <b-nav-item to="/Dashboard" active>Expenses</b-nav-item>
       <b-nav-item>Link</b-nav-item>
     </b-nav>
     <div class="login" v-if="user.loggedIn">

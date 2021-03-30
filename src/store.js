@@ -8,7 +8,8 @@ export default new Vuex.Store({
     user: {
       loggedIn: false,
       data: null,
-    }
+    },
+    expenses: {}
   },
   getters: {
     user(state){
@@ -21,6 +22,9 @@ export default new Vuex.Store({
     },
     SET_USER(state, data) {
       state.user.data = data;
+    },
+    SET_EXPENSES(state, expenses) {
+      state.expenses = expenses;
     }
   },
   actions: {
@@ -34,6 +38,9 @@ export default new Vuex.Store({
       } else {
         commit("SET_USER", null);
       }
+    },
+    onLoadExpenses({commit}, expenses) {
+      commit("SET_EXPENSES", expenses);
     }
   }
 });

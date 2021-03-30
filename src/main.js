@@ -7,6 +7,7 @@ import { use } from 'echarts/core'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import firebase from 'firebase/app'
 import store from "./store";
+import ExpensesService from "./services/ExpensesService"
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'bootstrap';
@@ -54,12 +55,15 @@ firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
 firebase.auth().onAuthStateChanged(user => {
-  console.log(user);
   store.dispatch("fetchUser", user);
+  ExpensesService.getService().onLogin();
 });
 
 new Vue({
   router,
   store,
   render: h => h(App),
+  mounted() {
+    ExpensesService.getService().init();
+  }
 }).$mount('#app')

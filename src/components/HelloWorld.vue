@@ -51,12 +51,43 @@
       />
     </b-row>
     <!-- Table Containers -->
-    <b-row class="accordian-row" v-if="expensesExist()">
+    <b-row class="accordian-row">
       <b-button v-b-toggle.all-expenses-table-container variant="primary">
         See All Expenses
       </b-button>
     </b-row>
     <b-collapse id="all-expenses-table-container" accordion="expense-accordion">
+      <b-button
+        variant="primary"
+        v-b-toggle.add-expense-form
+        class="add-expense-button"
+        >Add Expense</b-button
+      >
+      <b-collapse id="add-expense-form" class="mt-2">
+        <b-form inline>
+          <b-form-input
+            class="mb-2 mr-sm-2 mb-sm-0"
+            v-model="addExpense.Date"
+            placeholder="11/22/66"
+          ></b-form-input>
+          <b-form-input
+            class="mb-2 mr-sm-2 mb-sm-0"
+            v-model="addExpense.Category"
+            placeholder="Category"
+          ></b-form-input>
+          <b-form-input
+            class="mb-2 mr-sm-2 mb-sm-0"
+            v-model="addExpense.Description"
+            placeholder="Description"
+          ></b-form-input>
+          <b-form-input
+            class="mb-2 mr-sm-2 mb-sm-0"
+            v-model="addExpense.Cost"
+            placeholder="Cost"
+          ></b-form-input>
+          <b-button variant="success" v-on:click="addNewExpense">Add</b-button>
+        </b-form>
+      </b-collapse>
       <b-table striped hover :items="expenses" :fields="fields"></b-table>
     </b-collapse>
     <b-row class="accordian-row" v-if="expensesExist()">
@@ -91,6 +122,8 @@ import {
 import VChart, { THEME_KEY } from "vue-echarts";
 import csv from "jquery-csv";
 import DateFilterInput from "./DateFilterInput.vue";
+import ExpensesService from "../services/ExpensesService";
+import store from "../store";
 
 use([
   CanvasRenderer,
@@ -110,6 +143,21 @@ export default {
     [THEME_KEY]: "light",
   },
   methods: {
+    addNewExpense(event) {
+      var vue = this;
+      event.preventDefault();
+      ExpensesService.getService()
+        .addExpense(this.addExpense)
+        .then(() => {
+          console.log("Document added!");
+          vue.unfilteredObjects.push(this.addExpense);
+          vue.addExpense = {};
+          vue.updateValues(vue.unfilteredObjects);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+    },
     expensesExist() {
       return this.expenses.length != 0;
     },
@@ -122,10 +170,8 @@ export default {
       );
       this.updateValues(objects);
     },
-    legendSelected(params) {
+    legendSelected() {
       console.log("legend Selected");
-      console.log(params);
-      console.log(this.option2);
     },
     cleanupFile(e) {
       // Cleans Splitwise files to remove unused lines
@@ -164,6 +210,7 @@ export default {
         try {
           var fileResult = vue.cleanupFile(e.target.result);
           vue.unfilteredObjects = csv.toObjects(fileResult);
+          ExpensesService.getService().addExpenses(vue.unfilteredObjects);
           var objects = vue.unfilteredObjects;
           vue.fields = csv.toArrays(fileResult)[0].map(vue.toField);
           this.updateValues(objects);
@@ -235,7 +282,6 @@ export default {
         return result;
       });
       vue.option2.series[0].data = Array.from(vue.averageCostsPerMonth);
-      console.log(grouped[2][1]);
       vue.averageCostPerMonth =
         grouped
           .map((monthItem) => {
@@ -342,7 +388,7 @@ export default {
       expenses: [],
       unfilteredObjects: [],
       items: [],
-      fields: [],
+      fields: ["Date", "Category", "Description", "Cost"],
       categoryFields: [
         {
           key: "name",
@@ -362,16 +408,34 @@ export default {
       successAlertMessage: "",
       errorAlertMessage: "",
       inputFile: null,
+      addExpense: {
+        Date: null,
+        Category: null,
+        Description: "",
+        Cost: 0.0,
+      },
     };
   },
   mounted: function () {
-    console.log("Mounted");
+    var vue = this;
+    // vue.fields = csv.toArrays(fileResult)[0].map(vue.toField);
+    ExpensesService.getService()
+      .getExpenses()
+      .then((expenses) => {
+        vue.unfilteredObjects = expenses;
+        vue.successAlertMessage = "File imported!";
+        store.dispatch("onLoadExpenses", expenses);
+        this.updateValues(expenses);
+      });
     echarts["connect"]("1");
   },
 };
 </script>
 
 <style>
+body {
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+}
 .accordian-row {
   margin-top: 1%;
   margin-bottom: 1%;
@@ -390,5 +454,11 @@ export default {
 .input-button {
   margin-left: 0.5%;
   margin-right: 0.5%;
+}
+.add-expense-button {
+  margin-bottom: 0.5%;
+}
+#add-expense-form {
+  margin-bottom: 0.5%;
 }
 </style>

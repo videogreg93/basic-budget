@@ -71,6 +71,7 @@ export default {
         .signInWithEmailAndPassword(this.email, this.password)
         .then((user) => {
           store.dispatch("fetchUser", user);
+          console.log(firebase.auth().currentUser.uid);
           vue.$router.replace({ name: "Dashboard" });
         })
         .catch(err => {
