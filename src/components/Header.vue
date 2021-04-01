@@ -1,5 +1,8 @@
 <template>
   <b-row class="header">
+    <div v-if="isDebug" class="debug-row">
+      <h4 v-if="isDebug">DEBUG</h4>
+    </div>
     <h4 v-on:click="goHome()" class="home-button">Basic Budget</h4>
     <b-nav pills class="navigation">
       <b-nav-item to="/Dashboard" active>Expenses</b-nav-item>
@@ -54,6 +57,9 @@ export default {
       // map `this.user` to `this.$store.getters.user`
       user: "user",
     }),
+    isDebug: function() {
+      return process.env.NODE_ENV == "development"
+    }
   },
 };
 </script>
@@ -84,5 +90,11 @@ export default {
 
 .home-button {
   cursor: pointer;
+}
+
+.debug-row {
+  position: absolute;
+  right: 20%;
+  color: red;
 }
 </style>

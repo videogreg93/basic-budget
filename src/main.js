@@ -42,15 +42,28 @@ Vue.component('chart', ECharts)
 Vue.component('HelloWorld', HelloComponent)
 
 // Firebase configuration
-var firebaseConfig = {
-  apiKey: "AIzaSyCkS_VQHe1wICtDNzLrBefTHFv7JxBWRv0",
-  authDomain: "basic-budget-1085b.firebaseapp.com",
-  projectId: "basic-budget-1085b",
-  storageBucket: "basic-budget-1085b.appspot.com",
-  messagingSenderId: "329374989844",
-  appId: "1:329374989844:web:2c034a74fa8adb319cb101",
-  measurementId: "G-HXMHB8ZK53"
-};
+var firebaseConfig = {};
+if (process.env.NODE_ENV == "development") {
+  firebaseConfig = {
+    apiKey: "AIzaSyCkS_VQHe1wICtDNzLrBefTHFv7JxBWRv0",
+    authDomain: "basic-budget-1085b.firebaseapp.com",
+    projectId: "basic-budget-1085b",
+    storageBucket: "basic-budget-1085b.appspot.com",
+    messagingSenderId: "329374989844",
+    appId: "1:329374989844:web:2c034a74fa8adb319cb101",
+    measurementId: "G-HXMHB8ZK53"
+  };
+} else {
+  firebaseConfig = {
+    apiKey: "AIzaSyBpCBnXT7d9NK7FJmdg32Y_J-cX-qMBRj8",
+    authDomain: "basic-budget-production.firebaseapp.com",
+    projectId: "basic-budget-production",
+    storageBucket: "basic-budget-production.appspot.com",
+    messagingSenderId: "129639521942",
+    appId: "1:129639521942:web:1da1016e25a27591ac6cb7",
+    measurementId: "G-XZDJBZE0QS"
+  };
+}
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
