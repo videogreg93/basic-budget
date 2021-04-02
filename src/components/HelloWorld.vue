@@ -13,19 +13,7 @@
       errorAlertMessage
     }}</b-alert>
     <b-row class="fileRow">
-      <b-col cols="4">
-        <b-form-file
-          @change="onFileChange"
-          placeholder=""
-          drop-placeholder="Drop file here..."
-          v-model="inputFile"
-          accept=".csv"
-        ></b-form-file>
-      </b-col>
-      <b-button class="input-button" v-on:click="save" variant="success"
-        >Save</b-button
-      >
-      <b-button class="input-button" v-on:click="reset">Reset</b-button>
+      <import-expenses @onImport="onImport"></import-expenses>
     </b-row>
     <date-filter-input
       v-model="dateRange"
@@ -130,10 +118,10 @@ import {
   LegendComponent,
 } from "echarts/components";
 import VChart, { THEME_KEY } from "vue-echarts";
-import csv from "jquery-csv";
 import DateFilterInput from "./DateFilterInput.vue";
 import ExpensesService from "../services/ExpensesService";
 import store from "../store";
+import ImportExpenses from "./ImportExpenses.vue";
 
 use([
   CanvasRenderer,
@@ -148,11 +136,19 @@ export default {
   components: {
     VChart,
     DateFilterInput,
+    ImportExpenses,
   },
   provide: {
     [THEME_KEY]: "light",
   },
   methods: {
+    onImport(objects) {
+      var vue = this;
+      vue.unfilteredObjects = objects;
+      ExpensesService.getService().addExpenses(vue.unfilteredObjects);
+      this.updateValues(objects);
+      vue.successAlertMessage = "File imported!";
+    },
     deleteExpense(expense) {
       console.log(expense);
       var vue = this;
@@ -163,7 +159,7 @@ export default {
           vue.unfilteredObjects = vue.unfilteredObjects.filter((item) => {
             return item.id != expense.id;
           });
-          vue.onDateChange()
+          vue.onDateChange();
         });
     },
     addNewExpense(event) {
@@ -196,14 +192,6 @@ export default {
     legendSelected() {
       console.log("legend Selected");
     },
-    cleanupFile(e) {
-      // Cleans Splitwise files to remove unused lines
-      var result = e.substring(e.indexOf("\n") + 2);
-      result = result
-        .substring(1, result.length - 2)
-        .replace(/^\s*[\r\n]/gm, "\n");
-      return result;
-    },
     updateValues(objects) {
       var vue = this;
       vue.expenses = objects.slice(0, -1);
@@ -224,27 +212,6 @@ export default {
       vue.costsByCategory = costs;
       vue.getMonthlyCosts();
       vue.showSuccess = 3;
-    },
-    onFileChange(e) {
-      var vue = this;
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          var fileResult = vue.cleanupFile(e.target.result);
-          vue.unfilteredObjects = csv.toObjects(fileResult);
-          ExpensesService.getService().addExpenses(vue.unfilteredObjects);
-          var objects = vue.unfilteredObjects;
-          vue.fields = csv.toArrays(fileResult)[0].map(vue.toField);
-          this.updateValues(objects);
-          vue.successAlertMessage = "File imported!";
-        } catch (error) {
-          vue.showError = true;
-          vue.errorAlertMessage = "File could not be imported.";
-          console.log(error);
-        }
-      };
-      reader.readAsText(file);
     },
     // Generic function to group objects of an array via the keygetter
     groupBy(list, keyGetter) {
@@ -333,7 +300,6 @@ export default {
       this.expenses = [];
       this.categories = [];
       this.items = [];
-      this.fields = [];
       this.option.series.forEach((item) => {
         item.data = [];
       });
@@ -344,19 +310,19 @@ export default {
     },
   },
   computed: {
-    selectCategories: function() {
+    selectCategories: function () {
       var vue = this;
       console.log("Categories: " + vue.categories);
       return Array.from(this.categories).map((item) => {
-          return item;
+        return item;
       });
-    }
+    },
   },
   data() {
     return {
       dateRange: {
-        from: "0000-01-01",
-        until: "3000-01-01",
+        from: "2017-01-01",
+        until: new Date().toISOString().split("T")[0],
       },
       resize: true,
       option: {
@@ -421,10 +387,26 @@ export default {
       unfilteredObjects: [],
       items: [],
       fields: [
-        "Date",
-        "Category",
-        "Description",
-        "Cost",
+        {
+          key: "Date",
+          sortable: true,
+        },
+        {
+          key: "Description",
+          sortable: true,
+        },
+        {
+          key: "Category",
+          sortable: true,
+        },
+        {
+          key: "Cost",
+          sortable: true,
+        },
+        {
+          key: "Currency",
+          sortable: true,
+        },
         {
           key: "actions",
           label: "",
