@@ -65,16 +65,17 @@
       >
       <b-collapse id="add-expense-form" class="mt-2">
         <b-form inline>
-          <b-form-input
+          <b-form-datepicker
             class="mb-2 mr-sm-2 mb-sm-0"
             v-model="addExpense.Date"
             placeholder="11/22/66"
-          ></b-form-input>
-          <b-form-input
+          ></b-form-datepicker>
+          <b-form-select
             class="mb-2 mr-sm-2 mb-sm-0"
+            :options="selectCategories"
             v-model="addExpense.Category"
             placeholder="Category"
-          ></b-form-input>
+          ></b-form-select>
           <b-form-input
             class="mb-2 mr-sm-2 mb-sm-0"
             v-model="addExpense.Description"
@@ -341,6 +342,15 @@ export default {
       });
       this.inputFile = null;
     },
+  },
+  computed: {
+    selectCategories: function() {
+      var vue = this;
+      console.log("Categories: " + vue.categories);
+      return Array.from(this.categories).map((item) => {
+          return item;
+      });
+    }
   },
   data() {
     return {
