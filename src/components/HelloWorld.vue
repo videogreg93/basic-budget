@@ -145,7 +145,6 @@ export default {
     onImport(objects) {
       var vue = this;
       vue.unfilteredObjects = objects;
-      ExpensesService.getService().addExpenses(vue.unfilteredObjects);
       this.updateValues(objects);
       vue.successAlertMessage = "File imported!";
     },

@@ -109,6 +109,9 @@ export default {
               reader.readAsText(file);
             });
           break;
+        case 1: // Import only new expenses
+          reader.readAsText(file);
+          break;
         case 2: // Append to existing expenses
           reader.readAsText(file);
           break;
@@ -117,7 +120,23 @@ export default {
         try {
           var fileResult = vue.cleanupFile(e.target.result);
           vue.unfilteredObjects = csv.toObjects(fileResult);
-          vue.$emit("onImport", this.unfilteredObjects);
+          if (importType == 1) { // Import only new expenses
+            ExpensesService.getService()
+              .addOnlyNewExpenses(vue.unfilteredObjects)
+              .then(() => {
+                ExpensesService.getService()
+                  .getAllExpenses()
+                  .then((items) => {
+                    vue.$emit("onImport", items);
+                  });
+              });
+          } else {
+            ExpensesService.getService()
+              .addExpenses(vue.unfilteredObjects)
+              .then(() => {
+                vue.$emit("onImport", this.unfilteredObjects);
+              });
+          }
         } catch (error) {
           vue.showError = true;
           vue.errorAlertMessage = "File could not be imported.";

@@ -32,13 +32,15 @@ const ExpensesService = (function () {
         });
     }
     function _addExpenses(expenses) {
-        return expenses.forEach((item) => {
-            expensesDB
-                .add(item)
-                .catch((error) => {
-                    console.error("Error writing document: ", error);
-                });
-        });
+        return Promise.all(
+            expenses.map((item) => {
+                return expensesDB
+                    .add(item)
+                    .catch((error) => {
+                        console.error("Error writing document: ", error);
+                    });
+            })
+        );
     }
     function _addExpense(expense) {
         return expensesDB
@@ -46,6 +48,20 @@ const ExpensesService = (function () {
             .catch((error) => {
                 console.error("Error writing document: ", error);
             });
+    }
+    // Only adds expenses from the list that aren't already uploaded to firebase
+    function _addOnlyNewExpenses(expenses) {
+        return _getExpenses().then((items) => {
+            console.log(items[3]);
+            console.log(expenses[3]);
+            var uniqueItems = expenses.filter(function (obj) { return items.findIndex(x => {
+                return (x.Description == obj.Description && x.Date == obj.Date && obj.Cost == x.Cost)
+            }) == -1 });
+            console.log("Adding " + uniqueItems.length + " new items");
+            return Promise.all(uniqueItems.map((item) => {
+                return _addExpense(item);
+            }));
+        });
     }
     function _deleteExpense(expense) {
         return expensesDB
@@ -69,6 +85,7 @@ const ExpensesService = (function () {
         getExpenses: _getExpenses,
         addExpenses: _addExpenses,
         addExpense: _addExpense,
+        addOnlyNewExpenses: _addOnlyNewExpenses,
         deleteExpense: _deleteExpense,
         deleteAllExpenses: _deleteAllExpenses
     }
