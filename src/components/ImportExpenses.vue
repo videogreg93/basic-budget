@@ -18,18 +18,36 @@
           <b-col cols="8">
             <b-form-file
               placeholder=""
-              drop-placeholder="Drop file here..."
               v-model="inputFile"
               accept=".csv"
             ></b-form-file>
           </b-col>
-          <b-button
-            class="input-button"
-            v-on:click="importSplitwise"
-            variant="success"
-            :disabled="!inputFile"
-            >Import</b-button
-          >
+        </b-row>
+        <b-row>
+          <b-col>
+            <b-form
+              ><b-form-group
+                label="Import option: "
+                v-slot="{ ariaDescribedby }"
+              >
+                <b-form-radio-group
+                  class="pt-2"
+                  :options="splitwise.importOptions"
+                  v-model="splitwise.selectedImportOption"
+                  :aria-describedby="ariaDescribedby"
+                  stacked
+                />
+              </b-form-group>
+
+              <b-button
+                class="input-button"
+                v-on:click="importSplitwise"
+                variant="success"
+                :disabled="!inputFile || splitwise.selectedImportOption == null"
+                >Import</b-button
+              >
+            </b-form>
+          </b-col>
         </b-row>
       </div>
       <div v-if="selectedValue == 'CSV'">
@@ -41,11 +59,29 @@
 
 <script>
 import csv from "jquery-csv";
+import ExpensesService from "../services/ExpensesService";
 
 export default {
   name: "ImportExpenses",
   data() {
     return {
+      splitwise: {
+        selectedImportOption: null,
+        importOptions: [
+          {
+            text: "Override existing expenses",
+            value: 0,
+          },
+          {
+            text: "Import only new expenses",
+            value: 1,
+          },
+          {
+            text: "Append to existing expenses",
+            value: 2,
+          },
+        ],
+      },
       inputFile: null,
       selectedValue: null,
       options: ["Splitwise", "CSV"],
@@ -61,9 +97,22 @@ export default {
     },
     importSplitwise() {
       var vue = this;
-      console.log(vue.inputFile);
       const file = vue.inputFile;
       const reader = new FileReader();
+      var importType = vue.splitwise.selectedImportOption;
+      switch (importType) {
+        case 0: // Override existing expenses
+          ExpensesService.getService()
+            .deleteAllExpenses()
+            .then(() => {
+              console.log("Deleted all expenses");
+              reader.readAsText(file);
+            });
+          break;
+        case 2: // Append to existing expenses
+          reader.readAsText(file);
+          break;
+      }
       reader.onload = (e) => {
         try {
           var fileResult = vue.cleanupFile(e.target.result);
@@ -75,7 +124,6 @@ export default {
           console.log(error);
         }
       };
-      reader.readAsText(file);
     },
     cleanupFile(e) {
       // Cleans Splitwise files to remove unused lines

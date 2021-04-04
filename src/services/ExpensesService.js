@@ -55,6 +55,13 @@ const ExpensesService = (function () {
                 console.error("Error writing document: ", error);
             });
     }
+    function _deleteAllExpenses() {
+        return _getExpenses().then((items) => {
+            return Promise.all(items.map((item) => {
+                return _deleteExpense(item)
+            }));
+        });
+    }
     return {
         init: _init,
         onLogin: _onLogin,
@@ -62,7 +69,8 @@ const ExpensesService = (function () {
         getExpenses: _getExpenses,
         addExpenses: _addExpenses,
         addExpense: _addExpense,
-        deleteExpense: _deleteExpense
+        deleteExpense: _deleteExpense,
+        deleteAllExpenses: _deleteAllExpenses
     }
 })();
 
