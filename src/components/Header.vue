@@ -4,7 +4,7 @@
       <h4 v-if="isDebug">DEBUG</h4>
     </div>
     <h4 v-on:click="goHome()" class="home-button">Basic Budget</h4>
-    <b-nav pills class="navigation">
+    <b-nav pills class="navigation" v-if="user.loggedIn">
       <b-nav-item to="/Dashboard" active>Expenses</b-nav-item>
       <b-nav-item>Link</b-nav-item>
     </b-nav>
@@ -50,16 +50,16 @@ export default {
     },
     goHome() {
       this.$router.push("/");
-    }
+    },
   },
   computed: {
     ...mapGetters({
       // map `this.user` to `this.$store.getters.user`
       user: "user",
     }),
-    isDebug: function() {
-      return process.env.NODE_ENV == "development"
-    }
+    isDebug: function () {
+      return process.env.NODE_ENV == "development";
+    },
   },
 };
 </script>

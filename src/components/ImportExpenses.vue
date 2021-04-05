@@ -2,7 +2,14 @@
   <div>
     <b-button v-b-modal.import-modal>Import file</b-button>
 
-    <b-modal id="import-modal" title="Import">
+    <b-modal
+      id="import-modal"
+      title="Import"
+      ok-title="Import"
+      @ok="importSplitwise"
+      :ok-disabled="!inputFile || splitwise.selectedImportOption == null"
+      ok-variant="success"
+    >
       <b-form class="import-select" inline>
         <label class="mr-sm-2" for="input-type-select">Import From </label>
         <b-form-select
@@ -38,20 +45,19 @@
                   stacked
                 />
               </b-form-group>
-
-              <b-button
-                class="input-button"
-                v-on:click="importSplitwise"
-                variant="success"
-                :disabled="!inputFile || splitwise.selectedImportOption == null"
-                >Import</b-button
-              >
             </b-form>
           </b-col>
         </b-row>
       </div>
       <div v-if="selectedValue == 'CSV'">
-        <h1>CSV</h1>
+        <p>
+          Use <a href="template.csv">this template</a> for your personal file
+        </p>
+        <b-form-file
+              placeholder=""
+              v-model="inputFile"
+              accept=".csv"
+            ></b-form-file>
       </div>
     </b-modal>
   </div>
@@ -95,7 +101,8 @@ export default {
       field.sortable = true;
       return field;
     },
-    importSplitwise() {
+    importSplitwise(event) {
+      event.preventDefault();
       var vue = this;
       const file = vue.inputFile;
       const reader = new FileReader();
@@ -120,13 +127,18 @@ export default {
         try {
           var fileResult = vue.cleanupFile(e.target.result);
           vue.unfilteredObjects = csv.toObjects(fileResult);
-          if (importType == 1) { // Import only new expenses
+          if (importType == 1) {
+            // Import only new expenses
             ExpensesService.getService()
               .addOnlyNewExpenses(vue.unfilteredObjects)
               .then(() => {
                 ExpensesService.getService()
                   .getAllExpenses()
                   .then((items) => {
+                    // Close the dialog
+                    vue.$nextTick(() => {
+                      this.$bvModal.hide("import-modal");
+                    });
                     vue.$emit("onImport", items);
                   });
               });
@@ -151,6 +163,9 @@ export default {
         .substring(1, result.length - 2)
         .replace(/^\s*[\r\n]/gm, "\n");
       return result;
+    },
+    okTest() {
+      console.log("test");
     },
   },
 };
